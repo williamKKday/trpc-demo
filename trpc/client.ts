@@ -2,6 +2,14 @@ import type { AppRouter } from "@/trpc/index";
 
 import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
 
+async function getToken() {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+  const token = window.localStorage.getItem("token");
+  return token ? `Bearer ${token}` : undefined;
+}
+
 const client = createTRPCClient<AppRouter>({
   links: [
     /**
@@ -13,6 +21,12 @@ const client = createTRPCClient<AppRouter>({
     }),
     httpBatchLink({
       url: `http://localhost:3000/api/trpc`,
+      // You can pass any HTTP headers you wish here
+      headers: async () => {
+        return {
+          Authorization: await getToken(),
+        };
+      },
     }),
   ],
 });
