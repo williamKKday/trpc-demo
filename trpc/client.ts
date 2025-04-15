@@ -1,6 +1,12 @@
 import type { AppRouter } from "@/trpc/index";
 
-import { createTRPCClient, httpBatchLink, loggerLink } from "@trpc/client";
+import {
+  createTRPCClient,
+  httpBatchLink,
+  httpSubscriptionLink,
+  loggerLink,
+  splitLink,
+} from "@trpc/client";
 
 async function getToken() {
   if (typeof window === "undefined") {
@@ -19,14 +25,20 @@ const client = createTRPCClient<AppRouter>({
     loggerLink({
       enabled: () => process.env.NODE_ENV === "development",
     }),
-    httpBatchLink({
-      url: `http://localhost:3000/api/trpc`,
-      // You can pass any HTTP headers you wish here
-      headers: async () => {
-        return {
-          Authorization: await getToken(),
-        };
-      },
+    splitLink({
+      condition: (op) => op.type === "subscription",
+      true: httpSubscriptionLink({
+        url: `/api/trpc`,
+      }),
+      false: httpBatchLink({
+        url: `/api/trpc`,
+        // You can pass any HTTP headers you wish here
+        headers: async () => {
+          return {
+            Authorization: await getToken(),
+          };
+        },
+      }),
     }),
   ],
 });

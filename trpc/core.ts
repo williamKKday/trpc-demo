@@ -3,7 +3,17 @@ import type { Context } from "@/trpc/context";
 import { initTRPC, TRPCError } from "@trpc/server";
 
 // You can use any variable name you like.
-const t = initTRPC.context<Context>().create();
+const t = initTRPC.context<Context>().create({
+  sse: {
+    ping: {
+      enabled: true,
+      intervalMs: 1_000,
+    },
+    client: {
+      reconnectAfterInactivityMs: 20_000,
+    },
+  },
+});
 
 export const router = t.router;
 export const publicProcedure = t.procedure;
